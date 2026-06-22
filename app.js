@@ -285,6 +285,7 @@ function renderChart(containerId, history) {
     
     const categoryData = [];
     const values = []; 
+    const volumes = [];
     const ma5 = [];
     const ma10 = [];
     const ma60 = [];
@@ -298,6 +299,10 @@ function renderChart(containerId, history) {
     history.forEach(item => {
         categoryData.push(item.date.substring(5)); 
         values.push([item.open, item.close, item.low, item.high]);
+        volumes.push({
+            value: item.volume,
+            itemStyle: { color: item.close >= item.open ? '#ef4444' : '#10b981' }
+        });
         ma5.push(item.ma5);
         ma10.push(item.ma10);
         ma60.push(item.ma60);
@@ -319,8 +324,9 @@ function renderChart(containerId, history) {
             padding: 10
         },
         grid: [
-            { left: '10%', right: '5%', top: '10%', height: '50%' }, 
-            { left: '10%', right: '5%', top: '65%', height: '30%' }  
+            { left: '10%', right: '5%', top: '5%', height: '45%' }, 
+            { left: '10%', right: '5%', top: '55%', height: '15%' },
+            { left: '10%', right: '5%', top: '75%', height: '20%' }  
         ],
         xAxis: [
             {
@@ -334,6 +340,13 @@ function renderChart(containerId, history) {
                 type: 'category',
                 data: categoryData,
                 gridIndex: 1,
+                axisLabel: { show: false },
+                axisLine: { lineStyle: { color: '#4b5563' } }
+            },
+            {
+                type: 'category',
+                data: categoryData,
+                gridIndex: 2,
                 axisLabel: { color: '#9ca3af', fontSize: 10 },
                 axisLine: { lineStyle: { color: '#4b5563' } }
             }
@@ -349,10 +362,15 @@ function renderChart(containerId, history) {
                 gridIndex: 1,
                 splitLine: { show: false },
                 axisLabel: { show: false }
+            },
+            {
+                gridIndex: 2,
+                splitLine: { show: false },
+                axisLabel: { show: false }
             }
         ],
         dataZoom: [
-            { type: 'inside', xAxisIndex: [0, 1], start: 33, end: 100 }
+            { type: 'inside', xAxisIndex: [0, 1, 2], start: 0, end: 100 }
         ],
         series: [
             {
@@ -417,10 +435,17 @@ function renderChart(containerId, history) {
                 lineStyle: { width: 1, type: 'dashed', color: '#9ca3af' }
             },
             {
-                name: 'MACD Hist',
+                name: '成交量',
                 type: 'bar',
                 xAxisIndex: 1,
                 yAxisIndex: 1,
+                data: volumes
+            },
+            {
+                name: 'MACD Hist',
+                type: 'bar',
+                xAxisIndex: 2,
+                yAxisIndex: 2,
                 data: hist.map(val => ({
                     value: val,
                     itemStyle: { color: val >= 0 ? '#ef4444' : '#10b981' }
@@ -430,8 +455,8 @@ function renderChart(containerId, history) {
                 name: 'DIF',
                 type: 'line',
                 data: macd,
-                xAxisIndex: 1,
-                yAxisIndex: 1,
+                xAxisIndex: 2,
+                yAxisIndex: 2,
                 showSymbol: false,
                 lineStyle: { width: 1, color: '#fb923c' }
             },
@@ -439,8 +464,8 @@ function renderChart(containerId, history) {
                 name: 'MACD(Signal)',
                 type: 'line',
                 data: signal,
-                xAxisIndex: 1,
-                yAxisIndex: 1,
+                xAxisIndex: 2,
+                yAxisIndex: 2,
                 showSymbol: false,
                 lineStyle: { width: 1, color: '#38bdf8' }
             }
