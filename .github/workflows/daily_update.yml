@@ -33,6 +33,6 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add frontend/data.json market_data.db || true
+          git add data.json backend/market_data.db || true
           git commit -m "Auto update daily stock data" || exit 0
           git push
