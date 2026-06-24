@@ -398,6 +398,7 @@ function renderChart(containerId, history) {
                 data: ma5,
                 smooth: true,
                 showSymbol: false,
+                itemStyle: { color: '#fef08a' },
                 lineStyle: { width: 1.5, color: '#fef08a' } 
             },
             {
@@ -406,6 +407,7 @@ function renderChart(containerId, history) {
                 data: ma10,
                 smooth: true,
                 showSymbol: false,
+                itemStyle: { color: '#f472b6' },
                 lineStyle: { width: 1.5, color: '#f472b6' } 
             },
             {
@@ -414,6 +416,7 @@ function renderChart(containerId, history) {
                 data: ma60,
                 smooth: true,
                 showSymbol: false,
+                itemStyle: { color: '#0abab5' },
                 lineStyle: { width: 1.5, color: '#0abab5' } 
             },
             {
@@ -422,6 +425,7 @@ function renderChart(containerId, history) {
                 data: ma248,
                 smooth: true,
                 showSymbol: false,
+                itemStyle: { color: '#a0522d' },
                 lineStyle: { width: 1.5, color: '#a0522d' } 
             },
             {
@@ -430,6 +434,7 @@ function renderChart(containerId, history) {
                 data: bbUpper,
                 smooth: true,
                 showSymbol: false,
+                itemStyle: { color: '#9ca3af' },
                 lineStyle: { width: 1, type: 'dashed', color: '#9ca3af' }
             },
             {
@@ -438,6 +443,7 @@ function renderChart(containerId, history) {
                 data: bbLower,
                 smooth: true,
                 showSymbol: false,
+                itemStyle: { color: '#9ca3af' },
                 lineStyle: { width: 1, type: 'dashed', color: '#9ca3af' }
             },
             {
@@ -464,6 +470,7 @@ function renderChart(containerId, history) {
                 xAxisIndex: 2,
                 yAxisIndex: 2,
                 showSymbol: false,
+                itemStyle: { color: '#fb923c' },
                 lineStyle: { width: 1, color: '#fb923c' }
             },
             {
@@ -473,6 +480,7 @@ function renderChart(containerId, history) {
                 xAxisIndex: 2,
                 yAxisIndex: 2,
                 showSymbol: false,
+                itemStyle: { color: '#38bdf8' },
                 lineStyle: { width: 1, color: '#38bdf8' }
             }
         ]
