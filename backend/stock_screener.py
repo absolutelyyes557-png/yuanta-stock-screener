@@ -159,7 +159,7 @@ def format_history(df, sym):
             
         history_data.append({
             'date': r['date'], 'open': r['open'], 'high': r['high'], 'low': r['low'],
-            'close': r['close'], 'volume': r['volume'],
+            'close': r['close'], 'volume': int(r['volume'] / 1000) if pd.notna(r['volume']) else 0,
             'ma5': safe_round(ma5_val, 2), 
             'ma10': safe_round(ma10_val, 2), 
             'ma60': safe_round(ma60_val, 2),
@@ -478,7 +478,7 @@ if __name__ == "__main__":
 
     print("匯出資料至 JSON...")
     output = {
-        "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "updated_at": (datetime.utcnow() + timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S"),
         "data": {
             "tea": sorted(data['tea'], key=lambda x: x['symbol']),
             "test": sorted(data['test'], key=lambda x: x['symbol']),
