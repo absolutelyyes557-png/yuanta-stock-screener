@@ -489,7 +489,19 @@ if __name__ == "__main__":
         }
     }
     
+    def scrub_nans(obj):
+        import math
+        if isinstance(obj, dict):
+            return {k: scrub_nans(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [scrub_nans(v) for v in obj]
+        elif isinstance(obj, float):
+            if math.isnan(obj) or math.isinf(obj):
+                return None
+            return obj
+        return obj
+
     with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump(output, f, ensure_ascii=False, indent=4)
+        json.dump(scrub_nans(output), f, ensure_ascii=False, indent=4)
         
     print(f"分析完成！茶葉:{len(data['tea'])} 測試:{len(data['test'])} 止月:{len(data['moon'])}")
