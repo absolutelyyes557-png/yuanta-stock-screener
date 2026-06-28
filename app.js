@@ -37,6 +37,10 @@ function renderIndices(indices) {
     
     let html = '';
     indices.forEach(idx => {
+        if (idx.name === '台股加權指數' || idx.symbol === '^TWII') {
+            renderTaiexChart(idx);
+        }
+        
         const isUp = idx.change >= 0;
         const colorClass = isUp ? 'text-danger' : 'text-success'; // 台股紅漲綠跌
         const sign = isUp ? '+' : '';
@@ -52,6 +56,131 @@ function renderIndices(indices) {
     });
     
     ticker.innerHTML = html;
+}
+
+function renderTaiexChart(idx) {
+    const container = document.getElementById('taiex-chart-container');
+    if (!container) return;
+    container.classList.remove('hidden');
+    
+    document.getElementById('taiex-current-price').textContent = idx.price.toLocaleString();
+    const isUp = idx.change >= 0;
+    const sign = isUp ? '+' : '';
+    const colorClass = isUp ? 'text-danger bg-danger/10' : 'text-success bg-success/10';
+    const changeEl = document.getElementById('taiex-change');
+    changeEl.textContent = `${sign}${idx.change} (${sign}${idx.change_percent}%)`;
+    changeEl.className = `font-mono text-sm px-2 py-0.5 rounded ml-2 ${colorClass}`;
+    
+    if (!idx.history || idx.history.length === 0) return;
+    
+    const chartDom = document.getElementById('taiex-chart');
+    const myChart = echarts.init(chartDom);
+    
+    const categoryData = [];
+    const values = []; 
+    const volumes = [];
+    const ma5 = [];
+    const ma20 = [];
+    
+    idx.history.forEach(item => {
+        categoryData.push(item.date.substring(5)); 
+        values.push([item.open, item.close, item.low, item.high]);
+        volumes.push({
+            value: item.volume,
+            itemStyle: { color: item.close >= item.open ? '#ef4444' : '#10b981' }
+        });
+        ma5.push(item.ma5);
+        ma20.push(item.ma20);
+    });
+
+    const option = {
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: { type: 'cross' },
+            backgroundColor: 'rgba(23, 27, 36, 0.9)',
+            borderColor: '#374151',
+            textStyle: { color: '#e5e7eb', fontSize: 12 },
+        },
+        grid: [
+            { left: '8%', right: '2%', top: '5%', height: '60%' }, 
+            { left: '8%', right: '2%', top: '70%', height: '20%' }
+        ],
+        xAxis: [
+            {
+                type: 'category',
+                data: categoryData,
+                gridIndex: 0,
+                axisLabel: { show: false },
+                axisLine: { lineStyle: { color: '#4b5563' } }
+            },
+            {
+                type: 'category',
+                data: categoryData,
+                gridIndex: 1,
+                axisLabel: { color: '#9ca3af', fontSize: 10 },
+                axisLine: { lineStyle: { color: '#4b5563' } }
+            }
+        ],
+        yAxis: [
+            {
+                scale: true,
+                gridIndex: 0,
+                splitLine: { show: true, lineStyle: { color: '#1f2937', type: 'dashed' } },
+                axisLabel: { color: '#9ca3af', fontSize: 10 }
+            },
+            {
+                gridIndex: 1,
+                splitLine: { show: false },
+                axisLabel: { show: false }
+            }
+        ],
+        dataZoom: [
+            { type: 'inside', xAxisIndex: [0, 1], start: 30, end: 100 }
+        ],
+        series: [
+            {
+                name: 'K線',
+                type: 'candlestick',
+                data: values,
+                xAxisIndex: 0,
+                yAxisIndex: 0,
+                itemStyle: {
+                    color: '#ef4444', 
+                    color0: '#10b981', 
+                    borderColor: '#ef4444',
+                    borderColor0: '#10b981'
+                }
+            },
+            {
+                name: 'MA5',
+                type: 'line',
+                data: ma5,
+                smooth: true,
+                showSymbol: false,
+                itemStyle: { color: '#fef08a' },
+                lineStyle: { width: 1.5 } 
+            },
+            {
+                name: 'MA20',
+                type: 'line',
+                data: ma20,
+                smooth: true,
+                showSymbol: false,
+                itemStyle: { color: '#38bdf8' },
+                lineStyle: { width: 1.5 } 
+            },
+            {
+                name: '成交量',
+                type: 'bar',
+                xAxisIndex: 1,
+                yAxisIndex: 1,
+                data: volumes
+            }
+        ]
+    };
+    
+    myChart.setOption(option);
+    window.addEventListener('resize', () => myChart.resize());
 }
 
 function promptPassword(strategy) {
@@ -108,6 +237,7 @@ function selectStrategy(strategy) {
     else if (strategy === 'moon') titleEl.textContent = '🌙 止月隱藏策略';
     else if (strategy === 'long_etf') titleEl.textContent = '📈 長期ETF區';
     else if (strategy === 'high_div') titleEl.textContent = '💸 高股息ETF區';
+    else if (strategy === 'statistics') titleEl.textContent = '📊 策略統計區';
     
     if (!cachedData) {
         document.getElementById('loading').classList.remove('hidden');
@@ -145,18 +275,32 @@ function renderStrategyData(strategy) {
         'test': '測試策略結果',
         'moon': '止月隱藏策略',
         'long_etf': '長期 ETF 區',
-        'high_div': '高股息 ETF 區'
+        'high_div': '高股息 ETF 區',
+        'statistics': '策略統計區'
     };
     
     document.getElementById('dashboard-title').textContent = titles[strategy];
     document.getElementById('update-time').textContent = cachedData.updated_at;
     
-    const stocks = cachedData.data[strategy];
     const grid = document.getElementById('stock-grid');
     const emptyState = document.getElementById('empty-state');
     const tableContainer = document.getElementById('table-container');
+    const statContainer = document.getElementById('statistics-container');
     
     grid.innerHTML = ''; // Clear previous content
+    
+    if (strategy === 'statistics') {
+        tableContainer.classList.add('hidden');
+        grid.classList.add('hidden');
+        emptyState.classList.add('hidden');
+        if (statContainer) statContainer.classList.remove('hidden');
+        renderStatistics(cachedData.data.statistics);
+        return;
+    }
+    
+    if (statContainer) statContainer.classList.add('hidden');
+    
+    const stocks = cachedData.data[strategy];
     
     if (strategy === 'long_etf' || strategy === 'high_div') {
         if (stocks && stocks.length > 0) {
@@ -181,6 +325,77 @@ function renderStrategyData(strategy) {
             emptyState.classList.remove('hidden');
         }
     }
+}
+
+function renderStatistics(stats) {
+    const container = document.getElementById('statistics-content');
+    if (!container) return;
+    
+    if (!stats) {
+        container.innerHTML = '<p class="text-gray-400">尚無統計資料。</p>';
+        return;
+    }
+    
+    const renderTable = (strategyKey, title, desc, data) => {
+        if (!data || data.length === 0) return '';
+        
+        let rowsHtml = '';
+        data.forEach(item => {
+            const currentPrice = item.current_price !== null ? item.current_price.toFixed(2) : '-';
+            const screenedPrice = item.screened_price !== null ? item.screened_price.toFixed(2) : '-';
+            
+            let perfHtml = '-';
+            if (item.performance !== null) {
+                const isUp = item.performance >= 0;
+                const color = isUp ? 'text-danger' : 'text-success';
+                const sign = isUp ? '+' : '';
+                perfHtml = `<span class="${color} font-bold">${sign}${item.performance.toFixed(2)}%</span>`;
+            }
+            
+            rowsHtml += `
+                <tr class="border-b border-gray-800 hover:bg-white/5 transition-colors">
+                    <td class="py-3 px-4 font-mono text-gray-400">${item.symbol}</td>
+                    <td class="py-3 px-4 text-white font-semibold">${item.name}</td>
+                    <td class="py-3 px-4 font-mono text-right text-white">${currentPrice}</td>
+                    <td class="py-3 px-4 font-mono text-right text-gray-400">${item.date}</td>
+                    <td class="py-3 px-4 font-mono text-right text-gray-400">${screenedPrice}</td>
+                    <td class="py-3 px-4 font-mono text-right">${perfHtml}</td>
+                </tr>
+            `;
+        });
+        
+        return `
+            <div class="bg-gray-900/40 border border-gray-800 rounded-2xl p-6 shadow-xl backdrop-blur-sm">
+                <h3 class="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+                    ${title} <span class="px-3 py-1 bg-gray-800 rounded-full text-sm font-normal text-gray-400">近30日歷史</span>
+                </h3>
+                <p class="text-gray-400 mb-6 text-sm bg-black/20 p-4 rounded-lg border border-gray-800/50">${desc}</p>
+                <div class="overflow-x-auto rounded-xl border border-gray-800">
+                    <table class="w-full whitespace-nowrap">
+                        <thead class="bg-gray-800/80 text-gray-400 text-sm">
+                            <tr>
+                                <th class="py-3 px-4 text-left font-semibold rounded-tl-lg">代號</th>
+                                <th class="py-3 px-4 text-left font-semibold">名稱</th>
+                                <th class="py-3 px-4 text-right font-semibold">現在股價</th>
+                                <th class="py-3 px-4 text-right font-semibold">篩選出的日期</th>
+                                <th class="py-3 px-4 text-right font-semibold">篩選出時的股價</th>
+                                <th class="py-3 px-4 text-right font-semibold rounded-tr-lg">迄今績效</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-800">
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    };
+    
+    container.innerHTML = `
+        ${renderTable('tea', '🍵 茶葉智慧站', '篩選邏輯：股價大於 60 日均線、248 日均線，且近 60 日內外資與投信皆有買超佈局的優質大型股。', stats['tea'])}
+        ${renderTable('test', '🧪 測試策略', '篩選邏輯：符合特定技術面與籌碼面條件，正處於測試階段的短線爆發型標的。', stats['test'])}
+        ${renderTable('moon', '🌙 止月隱藏策略', '篩選邏輯：利用布林通道與成交量量縮，尋找底部反轉或盤整突破邊緣的隱藏飆股。', stats['moon'])}
+    `;
 }
 
 function renderStocks(stocks) {
