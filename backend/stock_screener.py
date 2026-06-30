@@ -524,7 +524,7 @@ if __name__ == "__main__":
     
     # Query current prices
     cursor.execute("SELECT symbol, close FROM daily_quotes WHERE date = (SELECT MAX(date) FROM daily_quotes)")
-    latest_prices = {row[0]: row[1] for row in cursor.fetchall()}
+    latest_prices = {row[0].replace('.TW', '').replace('.TWO', ''): row[1] for row in cursor.fetchall()}
     
     statistics = {'tea': [], 'test': [], 'moon': []}
     for row in history_records:
