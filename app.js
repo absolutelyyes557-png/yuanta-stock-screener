@@ -352,12 +352,20 @@ function renderStatistics(stats) {
                 perfHtml = `<span class="${color} font-bold">${sign}${item.performance.toFixed(2)}%</span>`;
             }
             
+            const dateTooltip = item.all_dates && item.all_dates.length > 1 
+                ? `title="所有篩選日期：&#10;${item.all_dates.join('&#10;')}" class="py-3 px-4 font-mono text-right text-gray-400 cursor-help underline decoration-dashed decoration-gray-500"`
+                : `class="py-3 px-4 font-mono text-right text-gray-400"`;
+                
+            const badge = item.all_dates && item.all_dates.length > 1 
+                ? `<span class="text-xs bg-gray-700 text-gray-300 px-1.5 py-0.5 rounded-full ml-1">${item.all_dates.length}次</span>` 
+                : '';
+
             rowsHtml += `
                 <tr class="border-b border-gray-800 hover:bg-white/5 transition-colors">
                     <td class="py-3 px-4 font-mono text-gray-400">${item.symbol}</td>
                     <td class="py-3 px-4 text-white font-semibold">${item.name}</td>
                     <td class="py-3 px-4 font-mono text-right text-white">${currentPrice}</td>
-                    <td class="py-3 px-4 font-mono text-right text-gray-400">${item.date}</td>
+                    <td ${dateTooltip}>${item.date} ${badge}</td>
                     <td class="py-3 px-4 font-mono text-right text-gray-400">${screenedPrice}</td>
                     <td class="py-3 px-4 font-mono text-right">${perfHtml}</td>
                 </tr>
