@@ -526,24 +526,51 @@ if __name__ == "__main__":
     cursor.execute("SELECT symbol, close FROM daily_quotes WHERE date = (SELECT MAX(date) FROM daily_quotes)")
     latest_prices = {row[0].replace('.TW', '').replace('.TWO', ''): row[1] for row in cursor.fetchall()}
     
-    statistics = {'tea': [], 'test': [], 'moon': []}
+    stat_groups = {'tea': {}, 'test': {}, 'moon': {}}
     for row in history_records:
         r_date, r_symbol, r_name, r_price, r_strat = row
         current_price = latest_prices.get(r_symbol)
         
-        perf = None
-        if current_price is not None and r_price is not None and r_price > 0:
-            perf = round(((current_price - r_price) / r_price) * 100, 2)
+        if r_strat in stat_groups:
+            if r_symbol not in stat_groups[r_strat]:
+                stat_groups[r_strat][r_symbol] = {
+                    "symbol": r_symbol,
+                    "name": r_name,
+                    "all_dates": [r_date],
+                    "screened_price": r_price,
+                    "current_price": current_price
+                }
+            else:
+                stat_groups[r_strat][r_symbol]["all_dates"].append(r_date)
+                # Since we iterate descending, this updates to the earliest price
+                stat_groups[r_strat][r_symbol]["screened_price"] = r_price
+
+    statistics = {'tea': [], 'test': [], 'moon': []}
+    for strat, groups in stat_groups.items():
+        for sym, sym_data in groups.items():
+            # sort dates ascending for neatness in tooltip
+            sym_data["all_dates"].sort()
+            earliest_date = sym_data["all_dates"][0]
             
-        if r_strat in statistics:
-            statistics[r_strat].append({
-                "date": r_date,
-                "symbol": r_symbol,
-                "name": r_name,
-                "screened_price": round(r_price, 2) if r_price else None,
-                "current_price": round(current_price, 2) if current_price else None,
+            c_price = sym_data["current_price"]
+            s_price = sym_data["screened_price"]
+            perf = None
+            if c_price is not None and s_price is not None and s_price > 0:
+                perf = round(((c_price - s_price) / s_price) * 100, 2)
+                
+            statistics[strat].append({
+                "date": earliest_date,
+                "all_dates": sym_data["all_dates"],
+                "symbol": sym,
+                "name": sym_data["name"],
+                "screened_price": round(s_price, 2) if s_price else None,
+                "current_price": round(c_price, 2) if c_price else None,
                 "performance": perf
             })
+            
+    # Sort each strategy list by earliest date descending (newest first)
+    for strat in statistics:
+        statistics[strat].sort(key=lambda x: x["date"], reverse=True)
             
     conn.close()
 
